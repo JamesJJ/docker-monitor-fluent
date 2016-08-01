@@ -1,0 +1,25 @@
+version: '2'
+services:
+
+  fluentd-test:
+    image: 'fluent/fluentd:latest'
+    volumes:
+      - './test:/fluentd/etc/test'
+    environment:
+      FLUENTD_CONF: 'test/fluentd.conf'
+    expose:
+      - '24224'
+
+
+  docker-monitor:
+    build: .
+    image: 'docker-monitor-fluent:test'
+    environment:
+      FLUENTD_HOST: 'fluentd-test'
+      FLUENTD_PORT: '24224'
+      TAG_PREFIX: 'testing_docker_monitor'
+      WAIT_TIME: '10'
+      DOCKER_SOCKET: 'unix:///tmp/docker.sock'
+    volumes:
+      - '/var/run/docker.sock:/tmp/docker.sock'
+
