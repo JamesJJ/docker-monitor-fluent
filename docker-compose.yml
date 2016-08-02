@@ -12,14 +12,13 @@ services:
 
 
   docker-monitor:
-    build: .
-    image: 'docker-monitor-fluent:test'
+    image: 'jamesjj/docker-monitor-fluent:prod'
     environment:
-      DEBUG: 'true'
+      DEBUG: 'false'
       FLUENTD_HOST: 'fluentd-test'
       FLUENTD_PORT: '24224'
       TAG_PREFIX: 'testing_docker_monitor'
-      WAIT_TIME: '10'
+      WAIT_TIME: '120'
       DOCKER_SOCKET: 'unix:///tmp/docker.sock'
     volumes:
       - '/var/run/docker.sock:/tmp/docker.sock'
