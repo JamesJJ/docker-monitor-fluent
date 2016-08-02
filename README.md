@@ -9,7 +9,7 @@ Simple free detailed read-only monitoring and analysis!
 This is a very lightweight container that you can run on each of your docker machines. Forwarding to fluentd is an easy way to aggregate the resource data. Fluentd has many [plugins](https://www.fluentd.org/plugins), so for example fluentd can directly input data to Elasticsearch, and then you can query or visualalize with Kibana.
 
 ![Container memory usage](test/201608-docker-cluster-memory.jpg?raw=true "Container memory usage")
-*Screenshot: Memory usage for each container visualized in Kibana*
+*Screenshot: Memory usage for each container in a docker cluster visualized in Kibana*
 
 ### What information is available?
 
@@ -36,9 +36,9 @@ Name            | Default   | Description
 `DEBUG`         | `false`   | Normally a just short message is shown when this container starts. Setting `DEBUG` to `true` will output continuous verbose debug information.
 `FLUENTD_HOST`  | `fluentd` | The hostname of your Fluentd
 `FLUENTD_PORT`  | `24224`   | The port your Fluentd is listening on (see `./test/fluentd.conf`)
-`TAG_PREFIX`    | null      | Each message send to Fluentd will be tagged with: `<TAG_PREFIX>.<container-id>`
+`TAG_PREFIX`    | null      | Each message sent to Fluentd will be tagged with: `<TAG_PREFIX>.<container-id>`
 `WAIT_TIME`     | `60`      | How long to wait in seconds between each data collection
-`DOCKER_SOCKET` | `unix:///var/run/docker.sock` | The address of your docker daemon. The recommended way to connect is my making the docker UNIX socket available to the container using a volume e.g. `docker run -it -v /var/run/docker.sock:/var/run/docker.sock jamesjj/docker-monitor-fluent:prod` ...but you should also be able to specify a TCP/HTTP endpoint here if you have configured your Docker daemon to listen on the network e.g. `http://127.0.0.1:8088`
+`DOCKER_SOCKET` | `unix:///var/run/docker.sock` | The address of your docker daemon. The recommended way to connect is by mounting the docker UNIX socket in to the container using a volume e.g. `docker run -it -v /var/run/docker.sock:/var/run/docker.sock jamesjj/docker-monitor-fluent:prod` ...but you should also be able to specify a TCP/HTTP endpoint here if you have configured your Docker daemon to listen on the network e.g. `http://127.0.0.1:8088`
  
 ## Simple demo
 
