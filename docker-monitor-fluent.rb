@@ -10,6 +10,7 @@ FLUENTD_HOST =    ENV['FLUENTD_HOST']        || 'fluentd'
 FLUENTD_PORT =    ENV['FLUENTD_PORT'].to_i   || 24224
 WAIT_TIME =       ENV['WAIT_TIME'].to_i      || 60
 DOCKER_SOCKET =   ENV['DOCKER_SOCKET']       || 'unix:///var/run/docker.sock'
+DEBUG =           (ENV['DEBUG'] == 'true')   ? true : false
 
 puts '== Docker Monitor Fluentd'
 puts DateTime.now
@@ -17,13 +18,16 @@ puts sprintf("TAG_PREFIX: %s", TAG_PREFIX)
 puts sprintf("FLUENTD_HOST: %s", FLUENTD_HOST)
 puts sprintf("FLUENTD_PORT: %d", FLUENTD_PORT)
 puts sprintf("WAIT_TIME: %d", WAIT_TIME)
+puts sprintf("DOCKER_SOCKET: %s", DOCKER_SOCKET)
+puts sprintf("DEBUG: %s", DEBUG.to_s)
 
 # Wait a couple of seconds before we start
 sleep (2)
 
 client = NetX::HTTPUnix.new(DOCKER_SOCKET)
 list_containers_req = Net::HTTP::Get.new("/containers/json?all=1&size=1")
-while fluent = Fluent::Logger::FluentLogger.new(TAG_PREFIX, :host=>FLUENTD_HOST, :port=>FLUENTD_PORT) do
+while fluent = Fluent::Logger::FluentLogger.new(TAG_PREFIX, :host=>FLUENTD_HOST, :port=>FLUENTD_PORT, :log_reconnect_error_threshold=>0, :buffer_limit=>16384) do
+  $stderr.puts "= Starting main loop" if DEBUG
   containers_resp = client.request(list_containers_req)
   if (containers_resp.code.to_s != '200') then
     $stderr.puts "= Error reading from: #{DOCKER_SOCKET} (#{containers_resp.code})"
@@ -31,7 +35,10 @@ while fluent = Fluent::Logger::FluentLogger.new(TAG_PREFIX, :host=>FLUENTD_HOST,
     next
   end
   containers = JSON.parse(containers_resp.body)
+  $stderr.puts "= Got containers data:" if DEBUG
+  $stderr.puts containers.inspect if DEBUG
   containers.each do |_c|
+    $stderr.puts "= Container loop: #{_c['State']}, #{_c['Id']}" if DEBUG
     stats = { }
     case _c['State']
     when 'running'  
@@ -42,6 +49,7 @@ while fluent = Fluent::Logger::FluentLogger.new(TAG_PREFIX, :host=>FLUENTD_HOST,
     else
       next
     end
+    $stderr.puts "= Fluent post: #{_c['State']}, #{_c['Id']}" if DEBUG
     fluent.post(_c['Id'], {
       id: _c['Id'],
       names: _c['Names'],
@@ -54,4 +62,5 @@ while fluent = Fluent::Logger::FluentLogger.new(TAG_PREFIX, :host=>FLUENTD_HOST,
   end
   sleep(WAIT_TIME)
 end
+
 

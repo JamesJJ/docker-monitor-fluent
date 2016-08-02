@@ -15,6 +15,7 @@ services:
     build: .
     image: 'docker-monitor-fluent:test'
     environment:
+      DEBUG: 'true'
       FLUENTD_HOST: 'fluentd-test'
       FLUENTD_PORT: '24224'
       TAG_PREFIX: 'testing_docker_monitor'
