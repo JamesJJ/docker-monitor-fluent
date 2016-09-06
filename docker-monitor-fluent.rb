@@ -24,9 +24,10 @@ puts sprintf("DEBUG: %s", DEBUG.to_s)
 # Wait a couple of seconds before we start
 sleep (2)
 
-client = NetX::HTTPUnix.new(DOCKER_SOCKET)
-list_containers_req = Net::HTTP::Get.new("/containers/json?all=1&size=1")
-while fluent = Fluent::Logger::FluentLogger.new(TAG_PREFIX, :host=>FLUENTD_HOST, :port=>FLUENTD_PORT, :log_reconnect_error_threshold=>0, :buffer_limit=>16384) do
+client = NetX::HTTPUnix.new(DOCKER_SOCKET) unless client
+list_containers_req = Net::HTTP::Get.new("/containers/json?all=1&size=1") unless list_containers_req
+fluent = Fluent::Logger::FluentLogger.new(TAG_PREFIX, :host=>FLUENTD_HOST, :port=>FLUENTD_PORT, :log_reconnect_error_threshold=>0, :buffer_limit=>16384)
+while true do
   $stderr.puts "= Starting main loop" if DEBUG
   containers_resp = client.request(list_containers_req)
   if (containers_resp.code.to_s != '200') then
@@ -50,7 +51,7 @@ while fluent = Fluent::Logger::FluentLogger.new(TAG_PREFIX, :host=>FLUENTD_HOST,
       next
     end
     $stderr.puts "= Fluent post: #{_c['State']}, #{_c['Id']}" if DEBUG
-    fluent.post(_c['Id'], {
+    unless fluent.post(_c['Id'], {
       id: _c['Id'],
       names: _c['Names'],
       image: _c['Image'],
@@ -59,6 +60,10 @@ while fluent = Fluent::Logger::FluentLogger.new(TAG_PREFIX, :host=>FLUENTD_HOST,
       size: _c['SizeRootFs'] / 1024 / 1024,
       stats: stats
     })
+      $stderr.puts fluent.last_error
+      sleep 10
+      exit(1)
+    end
   end
   sleep(WAIT_TIME)
 end
