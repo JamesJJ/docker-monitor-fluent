@@ -57,7 +57,7 @@ while true do
       image: _c['Image'],
       state: _c['State'],
       status: _c['Status'],
-      labels: _c['Labels'].keys.each { |k| h[k.sub(/\./, '#')] = h[k]; h.delete(k) },
+      labels: _c['Labels'].inject({}){ |hash, (k, v)| hash.merge( k.gsub(/\./, '#') => v )  },
       size: _c['SizeRootFs'] / 1024 / 1024,
       stats: stats
     })
