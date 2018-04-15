@@ -1,7 +1,7 @@
 FROM alpine:3.6
 
 WORKDIR /opt/docker-monitor-fluent
-ADD Gemfile ./
+COPY Gemfile ./
 
 RUN \
   apk upgrade --no-cache  && \
@@ -22,7 +22,7 @@ RUN \
   && adduser -h /home/app_daemon -s /sbin/nologin -D -g app_daemon app_daemon \
   && chown -R app_daemon:app_daemon /home/app_daemon
 
-ADD *.rb ./
+COPY *.rb ./
 
 RUN \
   chown app_daemon:app_daemon /opt/docker-monitor-fluent/*.rb \
