@@ -1,4 +1,4 @@
-FROM alpine:latest
+FROM alpine:3.6
 
 
 RUN \
@@ -21,13 +21,11 @@ RUN \
 
 WORKDIR /opt/docker-monitor-fluent
 
-ADD gems ./
+ADD Gemfile ./
 ADD *.rb ./
 
 RUN \
-  gem install --no-document fluent-logger \
-  && gem install --no-document net_http_unix-0.2.1-timeout-deprecation.gem \
-  && rm -f net_http_unix-0.2.1-timeout-deprecation.gem
+  bundle install --no-color --verbose
 
 RUN \
   apk del build-base git && \
@@ -37,7 +35,7 @@ RUN \
   chown app_daemon:app_daemon /opt/docker-monitor-fluent/*.rb \
   && chmod a-w /opt/docker-monitor-fluent/*.rb
 
-# Usually relaibaly reading the docker socket, needs root (or docker group)
+# Usually reliably reading the docker socket, needs root (or docker group)
 # USER app_daemon
 USER root
 
