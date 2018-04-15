@@ -47,6 +47,9 @@ loop do
       stats_resp = client.request(stats_req)
       stats = JSON.parse(stats_resp.body) if (stats_resp.code.to_s == '200')
     when 'restarting'
+      # Do not request per-container stats for "restarting" container,
+      # but do continue on and sned the restarting status to fluentd
+      nil
     else
       next
     end
