@@ -1,3 +1,4 @@
 # https://github.com/hadolint/hadolint
 ignored:
-  - DL3017
+  - DL3017  # apk upgrade
+  - DL3018  # specify specific package versions with apk
