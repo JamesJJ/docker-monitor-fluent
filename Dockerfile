@@ -35,9 +35,9 @@ RUN \
   chown app_daemon:app_daemon /opt/docker-monitor-fluent/*.rb \
   && chmod a-w /opt/docker-monitor-fluent/*.rb
 
-# Usually reliably reading the docker socket, needs root (or docker group)
+# Usually reliably reading the docker socket, needs root (or docker group), so not switching to non-root for now
 # USER app_daemon
-USER root
+
 
 ARG APP_CONFIG_VERSION
 ENV APP_CONFIG_VERSION ${APP_CONFIG_VERSION:-unknown}

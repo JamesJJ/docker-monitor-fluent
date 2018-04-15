@@ -27,7 +27,7 @@ sleep (2)
 client = NetX::HTTPUnix.new(DOCKER_SOCKET) unless client
 list_containers_req = Net::HTTP::Get.new("/containers/json?all=1&size=1") unless list_containers_req
 fluent = Fluent::Logger::FluentLogger.new(TAG_PREFIX, :host=>FLUENTD_HOST, :port=>FLUENTD_PORT, :log_reconnect_error_threshold=>0, :buffer_limit=>16384)
-while true do
+loop do
   $stderr.puts "= Starting main loop" if DEBUG
   containers_resp = client.request(list_containers_req)
   if (containers_resp.code.to_s != '200') then
@@ -42,7 +42,7 @@ while true do
     $stderr.puts "= Container loop: #{_c['State']}, #{_c['Id']}" if DEBUG
     stats = { }
     case _c['State']
-    when 'running'  
+    when 'running'
       stats_req = Net::HTTP::Get.new("/containers/#{_c['Id']}/stats?stream=0")
       stats_resp = client.request(stats_req)
       stats = JSON.parse(stats_resp.body) if (stats_resp.code.to_s == '200')
@@ -57,7 +57,7 @@ while true do
       image: _c['Image'],
       state: _c['State'],
       status: _c['Status'],
-      labels: _c['Labels'].inject({}){ |hash, (k, v)| hash.merge( k.gsub(/\./, '#') => v )  },
+      labels: _c['Labels'].inject({}){ |hash, (k, v)| hash.merge( k.tr('.', '#') => v )  },
       size: _c['SizeRootFs'] / 1024 / 1024,
       stats: stats
     })
