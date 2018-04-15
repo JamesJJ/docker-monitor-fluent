@@ -12,7 +12,7 @@ services:
 
 
   docker-monitor:
-    image: 'jamesjj/docker-monitor-fluent:prod'
+    build: .
     environment:
       DEBUG: 'false'
       FLUENTD_HOST: 'fluentd-test'
