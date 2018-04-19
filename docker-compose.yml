@@ -1,8 +1,9 @@
-version: '2'
+version: '2.2'
 services:
 
   fluentd-test:
     image: 'fluent/fluentd:latest'
+    mem_limit: 128m
     volumes:
       - './test:/fluentd/etc/test'
     environment:
@@ -13,6 +14,7 @@ services:
 
   docker-monitor:
     build: .
+    mem_limit: 48m
     environment:
       DEBUG: 'false'
       FLUENTD_HOST: 'fluentd-test'
