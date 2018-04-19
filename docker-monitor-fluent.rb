@@ -53,6 +53,14 @@ loop do
     else
       next
     end
+
+    # For ease of downstream processing, we can do some calculations here and add them in to the stats object
+    if stats.dig('memory_stats', 'usage') && stats.dig('memory_stats', 'max_usage') && stats.dig('memory_stats', 'limit')
+      # As we are doing interger maths, the 100* needs to go before the division
+      stats['memory_stats']['_usage_percent'] = (100 * stats.dig('memory_stats', 'usage').to_i / stats.dig('memory_stats', 'limit').to_i).to_i rescue 0
+      stats['memory_stats']['_max_usage_percent'] = (100 * stats.dig('memory_stats', 'max_usage').to_i / stats.dig('memory_stats', 'limit').to_i).to_i rescue 0
+    end
+
     $stderr.puts "= Fluent post: #{_c['State']}, #{_c['Id']}" if DEBUG
     unless fluent.post(_c['Id'], {
       id: _c['Id'],
