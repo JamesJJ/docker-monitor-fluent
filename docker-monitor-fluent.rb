@@ -55,10 +55,14 @@ loop do
     end
 
     # For ease of downstream processing, we can do some calculations here and add them in to the stats object
-    if stats.dig('memory_stats', 'usage') && stats.dig('memory_stats', 'max_usage') && stats.dig('memory_stats', 'limit')
-      # As we are doing interger maths, the 100* needs to go before the division
-      stats['memory_stats']['_usage_percent'] = (100 * stats.dig('memory_stats', 'usage').to_i / stats.dig('memory_stats', 'limit').to_i).to_i rescue 0
-      stats['memory_stats']['_max_usage_percent'] = (100 * stats.dig('memory_stats', 'max_usage').to_i / stats.dig('memory_stats', 'limit').to_i).to_i rescue 0
+    if stats.dig('memory_stats', 'usage') && stats.dig('memory_stats', 'max_usage') && stats.dig('memory_stats', 'limit') && stats.dig('memory_stats','stats','cache')
+      # As we are doing integer maths, the 100* needs to go before the division
+      cache_use = stats.dig('memory_stats','stats','cache').to_i rescue 0
+      total_use = stats.dig('memory_stats', 'usage').to_i rescue 0
+      max_use = stats.dig('memory_stats', 'max_usage').to_i rescue 0
+      mem_limit = stats.dig('memory_stats', 'limit').to_i rescue 1024
+      stats['memory_stats']['_usage_percent'] = 100 * (total_use - cache_use) / mem_limit  ## Current use excludes cache
+      stats['memory_stats']['_max_usage_percent'] = 100 * (max_use) / mem_limit            ## Max use includes cache
     end
 
     $stderr.puts "= Fluent post: #{_c['State']}, #{_c['Id']}" if DEBUG
