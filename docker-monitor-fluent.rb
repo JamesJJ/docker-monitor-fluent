@@ -4,6 +4,7 @@ require 'fluent-logger'
 require 'net_http_unix'
 require 'json'
 require 'time'
+require 'mini_cache'
 
 TAG_PREFIX =      ENV['TAG_PREFIX']          || nil
 FLUENTD_HOST =    ENV['FLUENTD_HOST']        || 'fluentd'
@@ -23,6 +24,8 @@ puts sprintf("DEBUG: %s", DEBUG.to_s)
 
 # Wait a couple of seconds before we start
 sleep (2)
+
+history ||= MiniCache::Store.new
 
 client = NetX::HTTPUnix.new(DOCKER_SOCKET) unless client
 list_containers_req = Net::HTTP::Get.new("/containers/json?all=1&size=1") unless list_containers_req
@@ -55,7 +58,11 @@ loop do
     end
 
     # For ease of downstream processing, we can do some calculations here and add them in to the stats object
-    if stats.dig('memory_stats', 'usage') && stats.dig('memory_stats', 'max_usage') && stats.dig('memory_stats', 'limit') && stats.dig('memory_stats','stats','cache')
+    if  stats.dig('memory_stats', 'usage') && 
+        stats.dig('memory_stats', 'max_usage') && 
+        stats.dig('memory_stats', 'limit') && 
+        stats.dig('memory_stats','stats','cache')
+
       # As we are doing integer maths, the 100* needs to go before the division
       cache_use = stats.dig('memory_stats','stats','cache').to_i rescue 0
       total_use = stats.dig('memory_stats', 'usage').to_i rescue 0
@@ -63,6 +70,33 @@ loop do
       mem_limit = stats.dig('memory_stats', 'limit').to_i rescue 1024
       stats['memory_stats']['_usage_percent'] = 100 * (total_use - cache_use) / mem_limit  ## Current use excludes cache
       stats['memory_stats']['_max_usage_percent'] = 100 * (max_use) / mem_limit            ## Max use includes cache
+    end
+
+    if  stats.dig('cpu_stats', 'cpu_usage', 'total_usage') &&
+        stats.dig('cpu_stats', 'cpu_usage', 'percpu_usage') &&
+        stats.dig('cpu_stats', 'system_cpu_usage')
+
+      total_usage = stats.dig('cpu_stats', 'cpu_usage', 'total_usage')
+      ncpu = stats.dig('cpu_stats', 'cpu_usage', 'percpu_usage').length rescue 1
+      system_cpu_usage = stats.dig('cpu_stats', 'system_cpu_usage')
+
+      $stderr.puts "= Per CPU Usage for #{stats.dig('id')}: #{stats.dig('cpu_stats', 'cpu_usage', 'percpu_usage')}" if DEBUG
+      $stderr.puts "= Number of CPUs for #{stats.dig('id')}: #{ncpu}" if DEBUG
+
+      if history.set?(stats.dig('id'))
+        previous = history.get(stats.dig('id'))
+        $stderr.puts "= Previous for #{stats.dig('id')}: #{previous.inspect}" if DEBUG
+        cpu_delta = total_usage - previous[:tu]
+        system_delta = system_cpu_usage - previous[:scu]
+        cpu_percent = (system_delta > 0 && cpu_delta > 0) ? (cpu_delta.to_f / system_delta.to_f) * ncpu.to_f * 100.0 : 0.0
+        $stderr.puts "= CPU percent for #{stats.dig('id')}: #{cpu_percent}" if DEBUG
+        stats['cpu_stats']['_cpu_usage_percent'] = cpu_percent.dup
+      end
+
+      history.set(stats.dig('id'), expires_in: WAIT_TIME * 3) {{
+        tu: total_usage,
+        scu: system_cpu_usage
+      }}
     end
 
     $stderr.puts "= Fluent post: #{_c['State']}, #{_c['Id']}" if DEBUG
