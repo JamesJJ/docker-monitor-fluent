@@ -23,7 +23,7 @@ puts sprintf("DOCKER_SOCKET: %s", DOCKER_SOCKET)
 puts sprintf("DEBUG: %s", DEBUG.to_s)
 
 # Wait a couple of seconds before we start
-sleep (2)
+sleep (6)
 
 history ||= MiniCache::Store.new
 
@@ -35,7 +35,7 @@ loop do
   containers_resp = client.request(list_containers_req)
   if (containers_resp.code.to_s != '200') then
     $stderr.puts "= Error reading from: #{DOCKER_SOCKET} (#{containers_resp.code})"
-    sleep (2)
+    sleep (6)
     next
   end
   containers = JSON.parse(containers_resp.body)
@@ -77,7 +77,7 @@ loop do
         stats.dig('cpu_stats', 'system_cpu_usage')
 
       total_usage = stats.dig('cpu_stats', 'cpu_usage', 'total_usage')
-      ncpu = stats.dig('cpu_stats', 'cpu_usage', 'percpu_usage').length rescue 1
+      ncpu = stats.dig('cpu_stats', 'online_cpus') rescue stats.dig('cpu_stats', 'cpu_usage', 'percpu_usage').length
       system_cpu_usage = stats.dig('cpu_stats', 'system_cpu_usage')
 
       $stderr.puts "= Per CPU Usage for #{stats.dig('id')}: #{stats.dig('cpu_stats', 'cpu_usage', 'percpu_usage')}" if DEBUG
@@ -112,7 +112,6 @@ loop do
     })
       $stderr.puts fluent.last_error
       sleep 10
-      exit(1)
     end
   end
   sleep(WAIT_TIME)
