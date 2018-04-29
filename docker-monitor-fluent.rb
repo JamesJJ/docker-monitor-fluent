@@ -58,9 +58,9 @@ loop do
     end
 
     # For ease of downstream processing, we can do some calculations here and add them in to the stats object
-    if  stats.dig('memory_stats', 'usage') && 
-        stats.dig('memory_stats', 'max_usage') && 
-        stats.dig('memory_stats', 'limit') && 
+    if  stats.dig('memory_stats', 'usage') &&
+        stats.dig('memory_stats', 'max_usage') &&
+        stats.dig('memory_stats', 'limit') &&
         stats.dig('memory_stats','stats','cache')
 
       # As we are doing integer maths, the 100* needs to go before the division
