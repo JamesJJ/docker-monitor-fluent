@@ -1,6 +1,9 @@
-FROM alpine:3.6
+FROM alpine:3.7
+
+LABEL owner_team=OPS
 
 WORKDIR /opt/docker-monitor-fluent
+
 COPY Gemfile ./
 
 RUN \
