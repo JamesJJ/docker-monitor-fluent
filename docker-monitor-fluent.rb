@@ -12,6 +12,7 @@ FLUENTD_PORT =    ENV['FLUENTD_PORT'].to_i   || 24224
 WAIT_TIME =       ENV['WAIT_TIME'].to_i      || 60
 DOCKER_SOCKET =   ENV['DOCKER_SOCKET']       || 'unix:///var/run/docker.sock'
 DEBUG =           (ENV['DEBUG'] == 'true')   ? true : false
+INSPECT_STATE =   (ENV['INSPECT_STATE'] == 'false')   ? false: true
 
 puts '== Docker Monitor Fluentd'
 puts DateTime.now
@@ -44,6 +45,7 @@ loop do
   containers.each do |_c|
     $stderr.puts "= Container loop: #{_c['State']}, #{_c['Id']}" if DEBUG
     stats = { }
+    inspect_state = { }
     case _c['State']
     when 'running'
       stats_req = Net::HTTP::Get.new("/containers/#{_c['Id']}/stats?stream=0")
@@ -56,6 +58,13 @@ loop do
     else
       next
     end
+
+    if INSPECT_STATE then
+      istate_req = Net::HTTP::Get.new("/containers/#{_c['Id']}/json")
+      istate_resp = client.request(istate_req)
+      inspect_state = JSON.parse(istate_resp.body) if (istate_resp.code.to_s == '200')
+    end
+
 
     # For ease of downstream processing, we can do some calculations here and add them in to the stats object
     if  stats.dig('memory_stats', 'usage') &&
@@ -109,7 +118,9 @@ loop do
       labels: _c['Labels'].inject({}){ |hash, (k, v)| hash.merge( k.tr('.', '#') => v )  },
       size: _c['SizeRootFs'] / 1024 / 1024,
       stats: stats
-    })
+    }.merge(
+      INSPECT_STATE ? { inspect_state: inspect_state.dig('State') } : { }
+    ))
       $stderr.puts fluent.last_error
       sleep 10
     end
