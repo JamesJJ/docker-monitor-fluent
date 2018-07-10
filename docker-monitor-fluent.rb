@@ -13,6 +13,7 @@ WAIT_TIME =       ENV['WAIT_TIME'].to_i      || 60
 DOCKER_SOCKET =   ENV['DOCKER_SOCKET']       || 'unix:///var/run/docker.sock'
 DEBUG =           (ENV['DEBUG'] == 'true')   ? true : false
 INSPECT_STATE =   (ENV['INSPECT_STATE'] == 'false')   ? false: true
+SID =             ENV['SID']                 || nil
 
 puts '== Docker Monitor Fluentd'
 puts DateTime.now
@@ -120,6 +121,8 @@ loop do
       stats: stats
     }.merge(
       INSPECT_STATE ? { inspect_state: inspect_state.dig('State') } : { }
+    ).merge(
+      SID.nil? ? { } : { sid: SID }
     ))
       $stderr.puts fluent.last_error
       sleep 10
