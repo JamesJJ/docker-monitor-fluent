@@ -1,10 +1,4 @@
 # Docker Monitor Fluent
-*Docker Hub: [jamesjj/docker-monitor-fluent](https://hub.docker.com/r/jamesjj/docker-monitor-fluent/)*
-
-[![CodeFactor](https://www.codefactor.io/repository/github/JamesJJ/docker-monitor-fluent/badge)](https://www.codefactor.io/repository/github/JamesJJ/docker-monitor-fluent)
-[![Docker Automated build](https://img.shields.io/docker/automated/jamesjj/docker-monitor-fluent.svg)](https://hub.docker.com/r/jamesjj/docker-monitor-fluent/)
-[![Docker Automated build](https://img.shields.io/docker/build/jamesjj/docker-monitor-fluent.svg)](https://hub.docker.com/r/jamesjj/docker-monitor-fluent/)
-
 
 This docker container will read resource usage statistics for each running container, and then forward the data as JSON to Fluentd.
 
